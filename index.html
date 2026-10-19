@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>14-дневный адаптационный спринт</title>
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Tailwind CSS для светлого минималистичного дизайна -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            background-color: #F8FAFC;
+            color: #1E293B;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: 90px;
+        }
+        .card {
+            background: #FFFFFF;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+            border: 1px solid #F1F5F9;
+        }
+        input[type=range] {
+            accent-color: #10B981;
+        }
+        .tab-active {
+            color: #059669;
+            font-weight: 600;
+        }
+        .hide-scroll::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ШАПКА И КНОПКА SOS -->
+    <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 py-3 flex items-center justify-between">
+        <div>
+            <span class="text-xs font-medium text-emerald-600 uppercase tracking-wider">Адаптация к терапии</span>
+            <h1 class="text-base font-bold text-slate-800" id="header-title">День 1 из 14</h1>
+        </div>
+        <button onclick="toggleModal('sos-modal')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-semibold text-xs px-3.5 py-2 rounded-full flex items-center gap-1.5 shadow-sm active:scale-95 transition">
+            <i data-lucide="life-buoy" class="w-4 h-4"></i>
+            <span>SOS Помощь</span>
+        </button>
+    </header>
+
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <main class="px-4 pt-4 space-y-5">
+
+        <!-- ВКЛАДКА 1: СЕГОДНЯ (УРОК + ДНЕВНИК) -->
+        <section id="tab-today" class="space-y-5">
+            <!-- Переключатель дней (горизонтальный скролл) -->
+            <div class="flex gap-2 overflow-x-auto hide-scroll pb-1" id="day-pills"></div>
+
+            <!-- Карточка урока текущего дня -->
+            <div class="card p-5 space-y-4">
+                <div class="flex items-center justify-between">
+                    <span id="lesson-phase" class="text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700">Неделя 1 • Острая фаза</span>
+                    <span id="lesson-duration" class="text-xs text-slate-400 flex items-center gap-1">
+                        <i data-lucide="clock" class="w-3.5 h-3.5"></i> 7 мин
+                    </span>
+                </div>
+
+                <h2 id="lesson-title" class="text-lg font-bold text-slate-800 leading-snug"></h2>
+                
+                <!-- Плеер (имитация / место для вставки Kinescope или YouTube) -->
+                <div class="bg-slate-50 border border-slate-200/80 rounded-2xl aspect-video flex flex-col items-center justify-center p-4 text-center relative overflow-hidden">
+                    <div class="w-14 h-14 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-2 cursor-pointer active:scale-95 transition">
+                        <i data-lucide="play" class="w-6 h-6 ml-0.5"></i>
+                    </div>
+                    <p id="lesson-video-desc" class="text-xs font-medium text-slate-600 max-w-xs"></p>
+                </div>
+
+                <!-- Материал / Гайд дня -->
+                <div class="bg-emerald-50/60 border border-emerald-100 rounded-xl p-3.5 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-white text-emerald-600 flex items-center justify-center shadow-sm">
+                            <i data-lucide="file-text" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium">Материал дня</p>
+                            <p id="lesson-guide" class="text-sm font-semibold text-slate-800"></p>
+                        </div>
+                    </div>
+                    <button onclick="openGuide()" class="text-xs font-semibold text-emerald-700 bg-white px-3 py-1.5 rounded-lg border border-emerald-200 shadow-sm">Открыть</button>
+                </div>
+
+                <!-- Задание дня -->
+                <div class="pt-2 border-t border-slate-100">
+                    <p class="text-xs font-semibold text-slate-400 uppercase mb-1">Задание на сегодня:</p>
+                    <p id="lesson-task" class="text-sm text-slate-700 font-medium"></p>
+                </div>
+            </div>
+
+            <!-- ДНЕВНИК САМОЧУВСТВИЯ (Интерактивная форма) -->
+            <div class="card p-5 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">Дневник самочувствия</h3>
+                        <p class="text-xs text-slate-500">Заполните до 21:00 для обратной связи</p>
+                    </div>
+                    <span class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <i data-lucide="activity" class="w-4 h-4"></i>
+                    </span>
+                </div>
+
+                <!-- Ползунок Тошнота -->
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-medium">
+                        <span class="text-slate-600">Уровень тошноты</span>
+                        <span id="val-nausea" class="text-emerald-600 font-bold">2 / 10</span>
+                    </div>
+                    <input id="inp-nausea" type="range" min="1" max="10" value="2" class="w-full h-2 bg-slate-100 rounded-lg cursor-pointer" oninput="document.getElementById('val-nausea').innerText = this.value + ' / 10'">
+                    <div class="flex justify-between text-[10px] text-slate-400">
+                        <span>1 — отлично</span>
+                        <span>10 — невыносимо</span>
+                    </div>
+                </div>
+
+                <!-- Ползунок Тяжесть -->
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-medium">
+                        <span class="text-slate-600">Тяжесть в желудке</span>
+                        <span id="val-heavy" class="text-emerald-600 font-bold">3 / 10</span>
+                    </div>
+                    <input id="inp-heavy" type="range" min="1" max="10" value="3" class="w-full h-2 bg-slate-100 rounded-lg cursor-pointer" oninput="document.getElementById('val-heavy').innerText = this.value + ' / 10'">
+                </div>
+
+                <!-- Стул и Вода -->
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                        <label class="text-xs font-medium text-slate-600 block mb-1">Стул сегодня</label>
+                        <select id="inp-stool" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-700 font-medium focus:outline-none focus:border-emerald-500">
+                            <option value="Норма">✅ Комфортный</option>
+                            <option value="Запор">🧱 Запор / плотный</option>
+                            <option value="Диарея">💧 Жидкий / частый</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium text-slate-600 block mb-1">Норма воды и белка</label>
+                        <select id="inp-water" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-700 font-medium focus:outline-none focus:border-emerald-500">
+                            <option value="Выполнено">💧 Выполнено</option>
+                            <option value="Частично">⏳ Почти (50-70%)</option>
+                            <option value="Сложно пить">⚠️ Было сложно пить</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Комментарий -->
+                <div>
+                    <input id="inp-comment" type="text" placeholder="Коротко: как прошёл день и что ели?" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-700 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <button onclick="submitDailyReport()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-3.5 rounded-xl shadow-md shadow-emerald-600/15 active:scale-[0.99] transition flex items-center justify-center gap-2">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    <span>Отправить отчёт врачу</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ВКЛАДКА 2: МАРШРУТ 14 ДНЕЙ -->
+        <section id="tab-route" class="hidden space-y-4">
+            <div class="card p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-100">
+                <p class="text-xs font-semibold text-emerald-700">Обещание спринта</p>
+                <p class="text-xs text-slate-600 mt-1 leading-relaxed">Снижаем тошноту и тяжесть с 7–8 до 2–3 баллов, налаживаем стул и формируем рацион без потери мышц. Без фразы «терпите».</p>
+            </div>
+            <div id="all-days-list" class="space-y-2.5"></div>
+        </section>
+
+        <!-- ВКЛАДКА 3: ШПАРГАЛКИ И КАЛЬКУЛЯТОРЫ -->
+        <section id="tab-tools" class="hidden space-y-4">
+            <!-- Калькулятор воды и белка (День 4 и День 8) -->
+            <div class="card p-5 space-y-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+                        <i data-lucide="droplets" class="w-4 h-4"></i>
+                    </div>
+                    <h3 class="text-sm font-bold text-slate-800">Расчёт вашей нормы воды и белка</h3>
+                </div>
+                <div class="flex gap-2">
+                    <input id="calc-weight" type="number" placeholder="Ваш текущий вес (кг)" class="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-500">
+                    <button onclick="calcNorms()" class="bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-xl">Рассчитать</button>
+                </div>
+                <div id="calc-result" class="hidden bg-slate-50 rounded-xl p-3 text-xs space-y-1 border border-slate-100">
+                    <p>💧 <b>Вода в острой фазе:</b> <span id="res-water" class="text-emerald-600 font-bold"></span> мл/день (мелкими глотками)</p>
+                    <p>🥩 <b>Целевой белок (защита мышц):</b> <span id="res-protein" class="text-emerald-600 font-bold"></span> г/день</p>
+                </div>
+            </div>
+
+            <!-- Быстрые карточки-шпаргалки -->
+            <div class="space-y-2.5">
+                <h4 class="text-xs font-semibold text-slate-400 uppercase px-1">Быстрые памятки (открываются в 1 клик)</h4>
+                
+                <div class="card p-4 flex items-center justify-between cursor-pointer" onclick="showCheatSheet('friends')">
+                    <div class="flex items-center gap-3">
+                        <span class="text-lg">🟢</span>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Продукты-друзья и враги</p>
+                            <p class="text-xs text-slate-400">Шпаргалка для супермаркета на 1 неделю</p>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                </div>
+
+                <div class="card p-4 flex items-center justify-between cursor-pointer" onclick="showCheatSheet('stool')">
+                    <div class="flex items-center gap-3">
+                        <span class="text-lg">🥝</span>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Продукты-регуляторы стула</p>
+                            <p class="text-xs text-slate-400">Что добавить при запоре или диарее</p>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                </div>
+
+                <div class="card p-4 flex items-center justify-between cursor-pointer" onclick="showCheatSheet('protein')">
+                    <div class="flex items-center gap-3">
+                        <span class="text-lg">🥚</span>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">20 лёгких белковых перекусов</p>
+                            <p class="text-xs text-slate-400">Высокий белок без тяжести и тошноты</p>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                </div>
+
+                <div class="card p-4 flex items-center justify-between cursor-pointer" onclick="showCheatSheet('labs')">
+                    <div class="flex items-center gap-3">
+                        <span class="text-lg">🧪</span>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Чек-лист анализов (через 2–3 мес)</p>
+                            <p class="text-xs text-slate-400">Профилактика дефицитов и потери мышц</p>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- ВКЛАДКА 4: ВРАЧ, ЧАТ И МОСТИК НА ЛИЧНОЕ ВЕДЕНИЕ (15 000 ₽) -->
+        <section id="tab-doctor" class="hidden space-y-4">
+            <!-- Правила обратной связи -->
+            <div class="card p-5 space-y-3">
+                <h3 class="text-base font-bold text-slate-800">Связь с врачом и чат потока</h3>
+                <p class="text-xs text-slate-500 leading-relaxed">
+                    • <b>Срочные вопросы:</b> ответ в течение 4 часов.<br>
+                    • <b>Дневники до 21:00:</b> 2–3 раза в неделю я записываю подробный голосовой разбор ваших тенденций в чат.
+                </p>
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
+                    <a href="https://t.me/" target="_blank" class="bg-slate-100 text-slate-700 font-semibold text-xs py-3 rounded-xl text-center flex items-center justify-center gap-1.5">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i> Общий чат
+                    </a>
+                    <a href="https://t.me/" target="_blank" class="bg-rose-50 text-rose-600 font-semibold text-xs py-3 rounded-xl text-center flex items-center justify-center gap-1.5">
+                        <i data-lucide="alert-circle" class="w-4 h-4"></i> Срочный вопрос
+                    </a>
+                </div>
+            </div>
+
+            <!-- Живые эфиры -->
+            <div class="card p-5 space-y-2">
+                <span class="text-[11px] font-bold text-emerald-600 uppercase">Расписание живых разборов</span>
+                <div class="flex justify-between items-center py-2 border-b border-slate-100">
+                    <div>
+                        <p class="text-sm font-semibold text-slate-800">Эфир №1 (День 6)</p>
+                        <p class="text-xs text-slate-500">Разбор кейсов + «Побочка или тревога?»</p>
+                    </div>
+                    <span class="text-xs font-medium bg-slate-100 px-2.5 py-1 rounded-md">45–60 мин</span>
+                </div>
+                <div class="flex justify-between items-center pt-2">
+                    <div>
+                        <p class="text-sm font-semibold text-slate-800">Эфир №2 (День 13)</p>
+                        <p class="text-xs text-slate-500">Итоги + Стратегия на 2–6 месяц терапии</p>
+                    </div>
+                    <span class="text-xs font-medium bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-md">Финал</span>
+                </div>
+            </div>
+
+            <!-- МОСТИК К ИНДИВИДУАЛЬНОМУ СОПРОВОЖДЕНИЮ (15 000 ₽) -->
+            <div class="card p-5 bg-gradient-to-br from-white via-white to-emerald-50/70 border-emerald-200 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">Для выпускников спринта</span>
+                    <span class="text-xs font-semibold text-slate-500">Мест: 5 на поток</span>
+                </div>
+                <h3 class="text-base font-bold text-slate-800">Индивидуальное сопровождение (2 месяца)</h3>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    На 3–6 месяце терапии начинается плато, риск саркопении (потери мышц) и накопления дефицитов. Мы пройдём этот этап за руку с персональной коррекцией дозировок и рациона.
+                </p>
+                <div class="bg-white/90 rounded-xl p-3 border border-emerald-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] text-slate-400 line-through">Обычная цена: 25 000 ₽</p>
+                        <p class="text-base font-extrabold text-slate-800">15 000 ₽ <span class="text-xs font-normal text-emerald-600">+ разбор анализов в подарок</span></p>
+                    </div>
+                </div>
+                <button onclick="bookPersonal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-3.5 rounded-xl shadow-sm active:scale-95 transition">
+                    Забронировать место у врача
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- МОДАЛЬНОЕ ОКНО SOS (КРАСНЫЕ ФЛАГИ И ЭКСТРЕННАЯ ПОМОЩЬ) -->
+    <div id="sos-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs hidden flex items-end justify-center">
+        <div class="bg-white w-full max-w-lg rounded-t-3xl p-6 space-y-4 max-h-[85vh] overflow-y-auto">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-rose-600 flex items-center gap-2">
+                    <i data-lucide="shield-alert" class="w-5 h-5"></i> Протокол экстренной помощи
+                </h3>
+                <button onclick="toggleModal('sos-modal')" class="text-slate-400 p-1">✕</button>
+            </div>
+            <div class="space-y-3 text-xs text-slate-700">
+                <div class="bg-emerald-50/70 border border-emerald-100 p-3.5 rounded-2xl space-y-1.5">
+                    <p class="font-bold text-emerald-900">Что сделать за 30 минут, если подступила тошнота (День 3):</p>
+                    <p>1. <b>Положение тела:</b> не ложитесь горизонтально! Полусидя с приподнятым изголовьем.</p>
+                    <p>2. <b>Температура и воздух:</b> приток прохладного воздуха + 2–3 глотка прохладной воды с лимоном или слабый настой имбиря/мяты.</p>
+                    <p>3. <b>Пауза в еде:</b> отложите приём пищи, исключите запахи жареного и жирного.</p>
+                </div>
+                <div class="bg-rose-50 border border-rose-100 p-3.5 rounded-2xl space-y-1.5">
+                    <p class="font-bold text-rose-900">🚨 Красные флаги (когда нужно СРОЧНО к врачу):</p>
+                    <p>• Острая опоясывающая боль в верхних отделах живота (отдающая в спину).</p>
+                    <p>• Неукротимая рвота более 24 часов (невозможность удерживать даже воду).</p>
+                    <p>• Признаки выраженного обезвоживания, головокружение при вставании, отсутствие стула более 4–5 дней со вздутием и болью.</p>
+                </div>
+            </div>
+            <button onclick="toggleModal('sos-modal')" class="w-full bg-slate-100 text-slate-700 font-semibold text-xs py-3 rounded-xl">Понятно, закрыть</button>
+        </div>
+    </div>
+
+    <!-- НИЖНЯЯ НАВИГАЦИЯ (ТАБ-БАР) -->
+    <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-100 px-6 py-2.5 flex justify-between items-center z-40">
+        <button onclick="switchTab('today', this)" class="nav-btn tab-active flex flex-col items-center gap-1 text-xs">
+            <i data-lucide="calendar-check" class="w-5 h-5"></i>
+            <span>Сегодня</span>
+        </button>
+        <button onclick="switchTab('route', this)" class="nav-btn text-slate-400 flex flex-col items-center gap-1 text-xs">
+            <i data-lucide="map" class="w-5 h-5"></i>
+            <span>14 дней</span>
+        </button>
+        <button onclick="switchTab('tools', this)" class="nav-btn text-slate-400 flex flex-col items-center gap-1 text-xs">
+            <i data-lucide="book-open" class="w-5 h-5"></i>
+            <span>Шпаргалки</span>
+        </button>
+        <button onclick="switchTab('doctor', this)" class="nav-btn text-slate-400 flex flex-col items-center gap-1 text-xs">
+            <i data-lucide="stethoscope" class="w-5 h-5"></i>
+            <span>Врач и Чат</span>
+        </button>
+    </nav>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // БАЗА ДАННЫХ ВСЕХ 14 ДНЕЙ ВАШЕГО СПРИНТА
+        const sprintDays = [
+            { day: 1, week: 1, time: "7 мин", title: "Понимаю, что со мной происходит", video: "Анимация: что делает инкретин с вашим желудком прямо сейчас", guide: "Гайд «Красные флаги: норма vs срочно к врачу»", task: "Заполнить первый отчёт в Дневнике самочувствия до 20:00" },
+            { day: 2, week: 1, time: "8 мин", title: "Правило первой недели: что есть, чтобы не тошнило", video: "5 принципов питания в острой фазе (объём, температура, частота, белок, вода)", guide: "Список продуктов-друзей и продуктов-врагов", task: "Пересобрать свой день еды по новым правилам + отчёт" },
+            { day: 3, week: 1, time: "6 мин", title: "Тошнота: протокол экстренной помощи", video: "Что делать, если накрыло: 5 шагов за 30 минут", guide: "Безрецептурные помощники (имбирь, мята, лимон, поза) — док. база", task: "Протестировать 2 метода из гайда и описать эффект" },
+            { day: 4, week: 1, time: "5 мин", title: "Вода и электролиты: скрытая причина слабости", video: "Почему на инкретинах обезвоживание убивает прогресс", guide: "Сколько, когда и что пить. Расчёт под ваш вес", task: "Рассчитать свою норму во вкладке «Шпаргалки» + отчёт" },
+            { day: 5, week: 1, time: "7 мин", title: "Стул: разбираемся с запором и диареей", video: "Почему кишечник «встал» или «бежит», и как починить это едой", guide: "Продукты-регуляторы в зависимости от проблемы", task: "Скорректировать рацион продуктами-регуляторами + отчёт" },
+            { day: 6, week: 1, time: "60 мин", title: "ЖИВОЙ РАЗБОР №1 с врачом", video: "Разбор 3–5 типичных кейсов из чата + мини-лекция «Побочка vs Тревога»", guide: "Запись и тайм-коды эфира", task: "Присутствовать онлайн или посмотреть запись" },
+            { day: 7, week: 1, time: "5 мин", title: "Итоги 1-й недели + подготовка ко второй", video: "Что мы уже сделали и как измеряем прогресс", guide: "Чек-лист «Признаки, что острая фаза позади»", task: "Сравнить самочувствие: День 1 vs День 7" },
+            { day: 8, week: 2, time: "7 мин", title: "Белок: главный союзник на терапии", video: "Сколько белка нужно именно вам, чтобы не терять мышцы", guide: "20 быстрых высокобелковых перекусов без тошноты", task: "Внедрить 3 новых источника белка из гайда" },
+            { day: 9, week: 2, time: "6 мин", title: "Режим питания под ваш график", video: "3 типа режима: классический, интервальный, дробный", guide: "Шаблон-конструктор «Мой день еды»", task: "Собрать свой персональный шаблон дня" },
+            { day: 10, week: 2, time: "5 мин", title: "Социальная жизнь и рестораны", video: "Как есть вне дома, не испортив терапию", guide: "Шпаргалка: что заказывать в популярных сетях", task: "Спланировать один социальный приём пищи" },
+            { day: 11, week: 2, time: "6 мин", title: "Дефициты нутриентов через 2–3 месяца", video: "Какие анализы сдать обязательно, чтобы не «упасть» через полгода", guide: "Чек-лист анализов + оптимальные нормы", task: "Сохранить чек-лист (разбор входит в личное сопровождение)" },
+            { day: 12, week: 2, time: "8 мин", title: "Психология: страх еды и «я больше не такой»", video: "Почему вы грустите из-за еды, и как выстроить новые опоры", guide: "Мини-практика «Новые отношения с едой»", task: "Выполнить практику и поделиться мыслями" },
+            { day: 13, week: 2, time: "60 мин", title: "ЖИВОЙ РАЗБОР №2 + Стратегия на 3–6 месяц", video: "Разбор прогресса участников + презентация личного ведения", guide: "Спецусловия для выпускников (15 000 ₽ вместо 25 000 ₽)", task: "Задать вопросы по дальнейшей терапии" },
+            { day: 14, week: 2, time: "5 мин", title: "Финал: ваш персональный протокол", video: "Что вы прошли и пошаговый план на ближайший месяц", guide: "Персональный PDF «Ваш протокол питания на месяц»", task: "Заполнить финальный отчёт и забрать свой PDF-протокол" }
+        ];
+
+        let currentDay = 1;
+
+        function renderApp() {
+            // Рендер горизонтальных таблеток дней
+            const pillsContainer = document.getElementById('day-pills');
+            pillsContainer.innerHTML = sprintDays.map(d => `
+                <button onclick="selectDay(${d.day})" class="px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition ${d.day === currentDay ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200/80'}">
+                    День ${d.day}
+                </button>
+            `).join('');
+
+            // Заполнение урока текущего дня
+            const item = sprintDays.find(d => d.day === currentDay);
+            document.getElementById('header-title').innerText = `День ${item.day} из 14`;
+            document.getElementById('lesson-phase').innerText = item.week === 1 ? 'Неделя 1 • Острая фаза' : 'Неделя 2 • Стабилизация';
+            document.getElementById('lesson-duration').innerHTML = `<i data-lucide="clock" class="w-3.5 h-3.5"></i> ${item.time}`;
+            document.getElementById('lesson-title').innerText = `День ${item.day}. ${item.title}`;
+            document.getElementById('lesson-video-desc').innerText = item.video;
+            document.getElementById('lesson-guide').innerText = item.guide;
+            document.getElementById('lesson-task').innerText = item.task;
+
+            // Рендер полного списка 14 дней во вкладке "Маршрут"
+            const listContainer = document.getElementById('all-days-list');
+            listContainer.innerHTML = sprintDays.map(d => `
+                <div onclick="selectDay(${d.day}); switchTab('today', document.querySelectorAll('.nav-btn')[0])" class="card p-4 flex items-center justify-between cursor-pointer active:scale-[0.99] transition">
+                    <div class="space-y-0.5 pr-3">
+                        <span class="text-[10px] font-bold uppercase ${d.week === 1 ? 'text-emerald-600' : 'text-sky-600'}">День ${d.day} • Неделя ${d.week}</span>
+                        <p class="text-sm font-bold text-slate-800">${d.title}</p>
+                        <p class="text-xs text-slate-400">${d.guide}</p>
+                    </div>
+                    <span class="text-xs font-semibold text-slate-400">${d.time}</span>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function selectDay(day) {
+            currentDay = day;
+            renderApp();
+        }
+
+        function switchTab(tabId, btn) {
+            ['today', 'route', 'tools', 'doctor'].forEach(id => {
+                document.getElementById('tab-' + id).classList.add('hidden');
+            });
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('tab-active');
+                b.classList.add('text-slate-400');
+            });
+            btn.classList.add('tab-active');
+            btn.classList.remove('text-slate-400');
+        }
+
+        function toggleModal(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
+
+        function calcNorms() {
+            const w = parseFloat(document.getElementById('calc-weight').value);
+            if (!w || w < 35) return alert('Введите корректный вес в кг');
+            document.getElementById('res-water').innerText = Math.round(w * 30);
+            document.getElementById('res-protein').innerText = `${Math.round(w * 1.2)}–${Math.round(w * 1.5)}`;
+            document.getElementById('calc-result').classList.remove('hidden');
+        }
+
+        function showCheatSheet(type) {
+            const sheets = {
+                friends: "🟢 Продукты-друзья (1 неделя): нежирный бульон, запечённая индейка/треска, яйца всмятку, греческий йогурт, печёное яблоко.\n\n🔴 Продукты-враги: жареное в масле, жирные соусы, газировка, свежая выпечка, острое.",
+                stool: "🥝 При запоре: 2 киви в день, тёплая вода утром, магний цитрат (по согласованию), псиллиум с достаточной водой.\n\n🍚 При диарее: рис, печёный картофель, банан, исключение жиров и сырой клетчатки.",
+                protein: "🥚 Топ белковых перекусов без тошноты:\n1. Греческий йогурт / скир (15 г белка)\n2. Белковый омлет на пару\n3. Рикотта light с ягодами\n4. Запечённые медальоны из индейки\n5. Костный бульон с яйцом",
+                labs: "🧪 Базовый чек-лист через 2–3 месяца:\n• Общий анализ крови + Ферритин\n• Общий белок и Альбумин\n• Витамин B12, Фолиевая кислота, 25(OH)D\n• АЛТ, АСТ, Билирубин, Липаза, Амилаза\n• Липидный спектр и Гликированный гемоглобин"
+            };
+            alert(sheets[type]);
+        }
+
+        function openGuide() {
+            const item = sprintDays.find(d => d.day === currentDay);
+            alert(`Открывается PDF-файл:\n«${item.guide}»`);
+        }
+
+        // ОТПРАВКА ОТЧЁТА НАПРЯМУЮ В ВАШЕГО TELEGRAM-БОТА
+        function submitDailyReport() {
+            const payload = {
+                type: "daily_report",
+                day: currentDay,
+                nausea: document.getElementById('inp-nausea').value,
+                heaviness: document.getElementById('inp-heavy').value,
+                stool: document.getElementById('inp-stool').value,
+                water_protein: document.getElementById('inp-water').value,
+                comment: document.getElementById('inp-comment').value || "Без комментариев"
+            };
+            tg.sendData(JSON.stringify(payload));
+        }
+
+        // ЗАЯВКА НА ИНДИВИДУАЛЬНОЕ ВЕДЕНИЕ (15 000 ₽)
+        function bookPersonal() {
+            const payload = {
+                type: "upsell_15k",
+                message: "Хочу забрать 1 из 5 мест на индивидуальное сопровождение за 15 000 ₽ (+ разбор анализов)"
+            };
+            tg.sendData(JSON.stringify(payload));
+        }
+
+        renderApp();
+    </script>
+</body>
+</html>
